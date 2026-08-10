@@ -1,9 +1,8 @@
-import pandas_datareader as pdr
 from datetime import datetime
 from matplotlib.ticker import FuncFormatter
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import yfinance as yf
 
 
 def percentage_formatter(x, pos):
@@ -11,12 +10,16 @@ def percentage_formatter(x, pos):
 
 
 def get_historical_prices(tickers, start, end):
-    return pd.concat(
-        [pdr.get_data_yahoo(ticker, start, end)["Adj Close"]
-         for ticker in tickers],
-        axis=1,
-        keys=tickers
-    )
+    prices = yf.download(
+        tickers,
+        start=start,
+        end=end,
+        auto_adjust=True,
+        progress=False
+    )["Close"]
+    # yfinance sorts the tickers; restore the caller's order so that the
+    # columns line up with the labels used when annotating the plot.
+    return prices[list(tickers)]
 
 
 def get_parabola(a, b, c):
@@ -27,7 +30,7 @@ if __name__ == '__main__':
 
     days = 1
     tickers = ["IBM", "GOOG", "AAPL", "TGT", "GS", "MS", "AMZN",
-               "MSFT", "WMT", "NKE", "UNH", "PG", "DB", "C", "FB", "NVDA"]
+               "MSFT", "WMT", "NKE", "UNH", "PG", "DB", "C", "META", "NVDA"]
     start = datetime(2017, 9, 17)
     end = datetime(2020, 9, 17)
     prices = get_historical_prices(tickers, start, end)
@@ -60,27 +63,28 @@ if __name__ == '__main__':
     parabola = get_parabola(a, b, c)
     stdev_pts = np.sqrt(parabola(mean_pts))
 
-    _, ax = plt.subplots()
+    _, ax = plt.subplots(figsize=(11, 7), layout="constrained")
     ax.set_xlabel(
         "Standard Deviation of Returns (Annualized)",
-        fontsize=20
+        fontsize=16
     )
-    ax.set_ylabel("Mean Returns (Annualized)", fontsize=20)
+    ax.set_ylabel("Mean Returns (Annualized)", fontsize=16)
     ax.set_title(
         "Historical Returns Mean versus Standard Deviation",
-        fontsize=30
+        fontsize=20
     )
+    ax.tick_params(labelsize=11)
     formatter = FuncFormatter(percentage_formatter)
     ax.xaxis.set_major_formatter(formatter)
     ax.yaxis.set_major_formatter(formatter)
     ax.grid()
-    plt.xlim(xmin=0.15, xmax=x_max + 0.02)
-    plt.ylim(ymin=-0.15, ymax=y_max + 0.02)
+    plt.xlim(left=0.15, right=x_max + 0.02)
+    plt.ylim(bottom=-0.15, top=y_max + 0.02)
     plt.scatter(stdev_pts, mean_pts)
     plt.scatter(stdev, mean)
-    plt.scatter(np.sqrt(sigma2_0), r0, marker='x', c=0.1, s=100)
+    plt.scatter(np.sqrt(sigma2_0), r0, marker='x', c='black', s=100)
     plt.annotate("GMVP", xy=(np.sqrt(sigma2_0), r0), fontsize=15)
-    plt.scatter(np.sqrt(sigma2_1), r1, marker='x', c=0.1, s=100)
+    plt.scatter(np.sqrt(sigma2_1), r1, marker='x', c='black', s=100)
     plt.annotate("SEP", xy=(np.sqrt(sigma2_1), r1), fontsize=15)
     for t, x, y in zip(tickers, stdev, mean):
         plt.annotate(t, xy=(x, y))

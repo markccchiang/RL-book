@@ -4,7 +4,7 @@ import unittest
 import dataclasses
 
 from rl.distribution import Categorical
-import rl.test_distribution as distribution
+import tests.test_distribution as distribution
 from rl.markov_process import FiniteMarkovRewardProcess
 from rl.markov_decision_process import (ActionMapping,
                                         FiniteMarkovDecisionProcess,

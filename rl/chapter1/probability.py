@@ -22,7 +22,7 @@ class OldDie(Distribution):
         return f"Die(sides={self.sides})"
 
     def __eq__(self, other):
-        if isinstance(other, Die):
+        if isinstance(other, OldDie):
             return self.sides == other.sides
 
         return False

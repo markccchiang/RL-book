@@ -21,8 +21,7 @@ exactly the running mean, and with fixed α it is an exponentially-weighted mean
 **Temporal-Difference.** Replace the return with the bootstrapped estimate:
 
 ```
-V(S_t) ← V(S_t) + α·δ_t     where the TD error is
-δ_t     = R_{t+1} + γ·V(S_{t+1}) - V(S_t)
+V(S_t) ← V(S_t) + α·δ_t,   δ_t = R_{t+1} + γ·V(S_{t+1}) - V(S_t)
 ```
 ```
 Δw = α(R_{t+1} + γ V(S_{t+1};w) - V(S_t;w))∇_wV(S_t;w)
@@ -36,7 +35,7 @@ returns to.
 `Σ α_n = ∞`, `Σ α_n^2 < ∞` required for convergence:
 
 ```
-α_n = α/(1 + ≤ft((n-1)/H)^β)
+α_n = α/(1 + ((n-1)/H)^β)
 ```
 
 **TD vs MC — the substantive comparison:**

@@ -17,6 +17,7 @@ Build with::
 
 import filecmp
 import shutil
+import sys
 from pathlib import Path
 
 _HERE = Path(__file__).parent
@@ -47,7 +48,13 @@ project = 'RL-book Notes'
 author = 'Cheng-Chin Chiang'
 copyright = 'Notes on Rao & Jelvis, Foundations of Reinforcement Learning with Applications in Finance'
 
-extensions = ['myst_parser']
+sys.path.insert(0, str(_HERE / '_ext'))
+
+extensions = [
+    'myst_parser',
+    'sphinx.ext.mathjax',
+    'mathify',        # docs/_ext/mathify.py: Unicode maths -> LaTeX
+]
 
 # The notes are Markdown only; the .org files in notes/ are ignored.
 source_suffix = {'.md': 'markdown'}
@@ -57,7 +64,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'README.md']
 # Generate anchors for h1-h3 so the cross-file "...md#chapter-4--dynamic-..."
 # links in the notes resolve to real targets.
 myst_heading_anchors = 3
-myst_enable_extensions = ['deflist', 'smartquotes', 'substitution']
+myst_enable_extensions = ['deflist', 'dollarmath', 'smartquotes',
+                          'substitution']
 
 html_theme = 'furo'
 html_title = 'Foundations of RL with Applications in Finance — Notes'

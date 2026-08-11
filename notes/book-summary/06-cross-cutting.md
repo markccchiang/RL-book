@@ -6,17 +6,17 @@
 
 | Equation | Structure | Method | Where |
 |---|---|---|---|
-| MRP Bellman | linear | matrix inverse $(\boldsymbol{I}-\gamma\boldsymbol{\mathcal{P}})^{-1}\boldsymbol{\mathcal{R}}$ | `markov_process.py` |
-| Stationary distribution | eigenproblem | eigenvector of $\boldsymbol{\mathcal{P}}^T$ at $\lambda=1$ | `markov_process.py` |
-| Bellman Policy Eq. | linear | iterate $\boldsymbol{B}^{\pi}$ (contraction) | `dynamic_programming.evaluate_mrp` |
-| Bellman Optimality Eq. | non-linear ($\max$) | iterate $\boldsymbol{B}^*$, or Policy Iteration | `value_iteration`, `policy_iteration` |
+| MRP Bellman | linear | matrix inverse `(I-γP)^{-1}R` | `markov_process.py` |
+| Stationary distribution | eigenproblem | eigenvector of `P^T` at λ=1 | `markov_process.py` |
+| Bellman Policy Eq. | linear | iterate `B^π` (contraction) | `dynamic_programming.evaluate_mrp` |
+| Bellman Optimality Eq. | non-linear (max) | iterate `B^*`, or Policy Iteration | `value_iteration`, `policy_iteration` |
 | Finite-horizon Bellman | non-linear, acyclic | one backward sweep | `finite_horizon.py` |
 | Same, large state space | intractable | ADP: sample states + function approx | `approximate_dynamic_programming.py` |
-| Same, no model | unknown $\mathcal{P}_R$ | MC / TD / SARSA / Q-learning | `monte_carlo.py`, `td.py` |
+| Same, no model | unknown `P_R` | MC / TD / SARSA / Q-learning | `monte_carlo.py`, `td.py` |
 | Linear FA normal equations | linear | direct solve or SGD | `function_approx.py` |
-| PBE fixed point | linear in $\boldsymbol{w}$ | LSTD: accumulate $\boldsymbol{A},\boldsymbol{b}$; $\boldsymbol{w}=\boldsymbol{A}^{-1}\boldsymbol{b}$ | `td.least_squares_td` |
+| PBE fixed point | linear in w | LSTD: accumulate A, b; `w=A^{-1}b` | `td.least_squares_td` |
 | PBE, off-policy | needs true gradient | Gradient TD / TDC | chapter 12 |
-| $\nabla_{\boldsymbol{\theta}}J$ | expectation | Policy Gradient Theorem + sampling | `policy_gradient.py` |
+| `∇_θJ` | expectation | Policy Gradient Theorem + sampling | `policy_gradient.py` |
 | HJB PDE | non-linear PDE | guess the functional form → ODE | chapters 7, 9 |
 | Optimal stopping | recursive max | backward induction on a tree, or LSPI/DQN | chapters 8, 12 |
 | Efficient frontier | constrained QP | Lagrangian | appendix 2 |

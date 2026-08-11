@@ -26,8 +26,8 @@ The notes are split by module, one file per part, under [`book-summary/`](book-s
 The book is built bottom-up and so are these notes. The dependency chain that actually matters:
 
 - **[Notation](book-summary/00-notation.md) first** — the symbol conventions are used unchanged
-  everywhere, and a few are overloaded ($\gamma$ is the discount factor in RL but the CRRA
-  coefficient in chapters 6–7; $\pi_t$ is a wealth fraction in chapter 7, not a policy).
+  everywhere, and a few are overloaded (γ is the discount factor in RL but the CRRA
+  coefficient in chapters 6–7; `π_t` is a wealth fraction in chapter 7, not a policy).
 - **[Module I](book-summary/01-processes-and-planning.md)** is the spine. Everything after it is
   either an application of the Bellman equations or a way to solve them without a model.
 - **[Module II](book-summary/02-financial-applications.md)** can be read independently of
@@ -41,7 +41,25 @@ The book is built bottom-up and so are these notes. The dependency chain that ac
 - **[Cross-cutting reference](book-summary/06-cross-cutting.md)** is the lookup table —
   start here if you know the equation and want the method or the code.
 
-Notes on rendering: the book's own `.md` sources use LaTeX macros defined in
-`templates/latex.template` (`\bvpi`, `\bbs`, `\pdv`, …) that only exist in the XeLaTeX build.
-These notes expand all of them and stick to plain MathJax/KaTeX, so the math renders in an
-ordinary Markdown viewer.
+## A note on the math
+
+There is **no LaTeX in these notes** — nothing to render, nothing that needs a math plugin.
+The book's own `.md` sources are full of it, including macros defined in
+`templates/latex.template` (`\bvpi`, `\bbs`, `\pdv`, …) that exist only inside the XeLaTeX
+build. Here all of that is written out as plain Unicode text:
+
+| Instead of | You'll see |
+|---|---|
+| `\gamma`, `\pi`, `\lambda`, `\sigma` | γ, π, λ, σ |
+| `\mathcal{S}`, `\boldsymbol{V}` | S, V |
+| `\mathbb{E}`, `\mathbb{P}`, `\mathbb{R}` | E, Pr, ℝ |
+| `\mathbb{I}_{S_t=s}` | `1[S_t=s]` |
+| `\sum`, `\prod`, `\int`, `\nabla`, `\partial` | Σ, ∏, ∫, ∇, ∂ |
+| `\in`, `\leq`, `\rightarrow`, `\Rightarrow`, `\infty` | ∈, ≤, →, ⟹, ∞ |
+| `\frac{a}{b}`, `\cdot`, `\sqrt{x}` | a/b, ·, √x |
+| `\hat{Q}`, `\bar{R}` | Q̂, R̄ |
+
+Displayed equations are fenced code blocks, so they show as monospace anywhere. Inline
+formulas carrying `^`, `_` or `*` are wrapped in code spans, which keeps a `V^*` or an `S_t`
+from being swallowed as Markdown emphasis. Superscripts and subscripts keep their braces when
+they are more than one character: `V^π` but `S_{t+1}`.

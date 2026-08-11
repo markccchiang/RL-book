@@ -8,27 +8,36 @@ stops it (`rl/iterate.py`: `iterate`, `last`, `converge`, `converged`).
 
 ## Chapter 10 — MC and TD for Prediction
 
-**Monte-Carlo.** Supervised learning on $(S_t, G_t)$ pairs:
+**Monte-Carlo.** Supervised learning on `(S_t, G_t)` pairs:
 
-$$\mathcal{L}_{(S_t,G_t)}(\boldsymbol{w}) = \tfrac{1}{2}(V(S_t;\boldsymbol{w}) - G_t)^2 \;\Longrightarrow\; \Delta\boldsymbol{w} = \alpha (G_t - V(S_t;\boldsymbol{w}))\nabla_{\boldsymbol{w}}V(S_t;\boldsymbol{w})$$
+```
+L_{(S_t, G_t)}(w) = 1/2(V(S_t;w) - G_t)^2 ⟹ Δw = α (G_t - V(S_t;w))∇_wV(S_t;w)
+```
 
-Tabular form $V(S_t) \leftarrow V(S_t) + \alpha(G_t - V(S_t))$; with $\alpha = 1/n$ this is
-exactly the running mean, and with fixed $\alpha$ it is an exponentially-weighted mean
-$V_n = \sum_j \alpha(1-\alpha)^{n-j}Y^{(j)}$.
+Tabular form `V(S_t) ← V(S_t) + α(G_t - V(S_t))`; with α = 1/n this is
+exactly the running mean, and with fixed α it is an exponentially-weighted mean
+`V_n = Σ_j α(1-α)^{n-j}Y^{(j)}`.
 
 **Temporal-Difference.** Replace the return with the bootstrapped estimate:
 
-$$V(S_t) \leftarrow V(S_t) + \alpha \big( \underbrace{R_{t+1} + \gamma V(S_{t+1}) - V(S_t)}_{\delta_t} \big)$$
-$$\Delta\boldsymbol{w} = \alpha\,(R_{t+1} + \gamma V(S_{t+1};\boldsymbol{w}) - V(S_t;\boldsymbol{w}))\,\nabla_{\boldsymbol{w}}V(S_t;\boldsymbol{w})$$
+```
+V(S_t) ← V(S_t) + α·δ_t     where the TD error is
+δ_t     = R_{t+1} + γ·V(S_{t+1}) - V(S_t)
+```
+```
+Δw = α(R_{t+1} + γ V(S_{t+1};w) - V(S_t;w))∇_wV(S_t;w)
+```
 
-This is a **semi-gradient**: the target $R_{t+1} + \gamma V(S_{t+1};\boldsymbol{w})$ depends on $\boldsymbol{w}$
+This is a **semi-gradient**: the target `R_{t+1} + γ V(S_{t+1};w)` depends on w
 but is treated as a constant. It is not the gradient of any objective — the point chapter 12
 returns to.
 
 **Learning-rate schedule** (`learning_rate_schedule`), and the Robbins–Monro conditions
-$\sum \alpha_n = \infty$, $\sum \alpha_n^2 < \infty$ required for convergence:
+`Σ α_n = ∞`, `Σ α_n^2 < ∞` required for convergence:
 
-$$\alpha_n = \frac{\alpha}{1 + \left(\frac{n-1}{H}\right)^{\beta}}$$
+```
+α_n = α/(1 + ≤ft((n-1)/H)^β)
+```
 
 **TD vs MC — the substantive comparison:**
 
@@ -37,55 +46,65 @@ $$\alpha_n = \frac{\alpha}{1 + \left(\frac{n-1}{H}\right)^{\beta}}$$
 | Bias / variance | unbiased, high variance | biased, low variance |
 | Episodes | needs complete, terminating episodes | works on continuing tasks, learns online |
 | Markov property | doesn't exploit it | exploits it |
-| Batch convergence | minimizes MSE against observed returns | converges to the VF of the **MLE MRP** fitted from the data, $\mathcal{P}_R(s,r,s') = \frac{\sum_i \mathbb{I}_{S_i=s,R_{i+1}=r,S_{i+1}=s'}}{\sum_i \mathbb{I}_{S_i=s}}$ |
+| Batch convergence | minimizes MSE against observed returns | converges to the VF of the **MLE MRP** fitted from the data, `P_R(s, r, s') = (Σ_i 1_{S_i=s, R_{i+1}=r, S_{i+1}=s'})/(Σ_i 1[S_i=s])` |
 
 Empirically (`rl/chapter10/random_walk_mrp.py`) TD reaches a low RMSE faster at a comparable
-constant $\alpha$, and MC's error curve is visibly choppier.
+constant α, and MC's error curve is visibly choppier.
 
-**$n$-step bootstrapping and the $\lambda$-return.** Interpolating between the two:
+**n-step bootstrapping and the λ-return.** Interpolating between the two:
 
-$$G_{t,n} = \sum_{i=t+1}^{t+n}\gamma^{i-t-1}R_i + \gamma^n V(S_{t+n}), \qquad G_t^{(\lambda)} = (1-\lambda)\sum_{n=1}^{T-t-1}\lambda^{n-1}G_{t,n} + \lambda^{T-t-1}G_t$$
+```
+G_{t, n} = Σ_{i=t+1}^{t+n}γ^{i-t-1}R_i + γ^n V(S_{t+n}), G_t^{(λ)} = (1-λ)Σ_{n=1}^{T-t-1}λ^{n-1}G_{t, n} + λ^{T-t-1}G_t
+```
 
-$\lambda = 0$ is TD, $\lambda = 1$ is MC.
+λ = 0 is TD, λ = 1 is MC.
 
 **Eligibility traces** turn the *forward view* (which needs the whole episode) into an online
 *backward view*:
 
-$$\boldsymbol{E}_t = \gamma\lambda\boldsymbol{E}_{t-1} + \nabla_{\boldsymbol{w}}V(S_t;\boldsymbol{w}), \qquad \Delta\boldsymbol{w} = \alpha\,\delta_t\,\boldsymbol{E}_t$$
+```
+E_t = γλE_{t-1} + ∇_wV(S_t;w), Δw = αδ_tE_t
+```
 
 The chapter proves the two views are equivalent in the offline, episode-summed sense:
-$\sum_t \alpha \delta_t E_t(s) = \sum_t \alpha (G_t^{(\lambda)} - V(S_t))\mathbb{I}_{S_t=s}$.
+`Σ_t α δ_t E_t(s) = Σ_t α (G_t^{(λ)} - V(S_t))1[S_t=s]`.
 
 > **Code:** `rl/monte_carlo.py` (`mc_prediction`), `rl/td.py` (`td_prediction`),
 > `rl/td_lambda.py` (`lambda_return_prediction`, `td_lambda_prediction`), `rl/returns.py`.
 
 ## Chapter 11 — MC and TD for Control
 
-Control = GPI with a *sampled* evaluation step. Since we no longer have $\mathcal{P}$, improvement
-must be greedy w.r.t. $Q$, not $V$: $\pi_D'(s) = \arg\max_a Q^{\pi}(s,a)$.
+Control = GPI with a *sampled* evaluation step. Since we no longer have P, improvement
+must be greedy w.r.t. Q, not V: `π_D'(s) = argmax_a Q^π(s, a)`.
 
 **GLIE MC Control.** Tabular update on first/every visit:
 
-$$Count(S_t,A_t) \mathrel{+}= 1, \qquad Q(S_t,A_t) \mathrel{+}= \frac{1}{Count(S_t,A_t)}(G_t - Q(S_t,A_t))$$
+```
+Count(S_t, A_t) += 1, Q(S_t, A_t) += 1/(Count(S_t, A_t))(G_t - Q(S_t, A_t))
+```
 
 **GLIE** (Greedy in the Limit with Infinite Exploration) requires
-$\lim_k Count_k(s,a) = \infty$ and $\lim_k \pi_k(s,a) = \mathbb{I}_{a = \arg\max_b Q(s,b)}$;
-$\epsilon_k = 1/k$ satisfies both. Under GLIE + Robbins–Monro, $Q \to Q^*$.
+`lim_k Count_k(s, a) = ∞` and `lim_k π_k(s, a) = 1[a = argmax_b Q(s, b)]`;
+`ε_k = 1/k` satisfies both. Under GLIE + Robbins–Monro, `Q → Q^*`.
 
 **SARSA** (on-policy TD control):
 
-$$\Delta\boldsymbol{w} = \alpha\,(R_{t+1} + \gamma Q(S_{t+1},A_{t+1};\boldsymbol{w}) - Q(S_t,A_t;\boldsymbol{w}))\,\nabla_{\boldsymbol{w}}Q(S_t,A_t;\boldsymbol{w})$$
+```
+Δw = α(R_{t+1} + γ Q(S_{t+1}, A_{t+1};w) - Q(S_t, A_t;w))∇_wQ(S_t, A_t;w)
+```
 
-with $n$-step and SARSA($\lambda$) variants built the same way as in chapter 10.
+with n-step and SARSA(λ) variants built the same way as in chapter 10.
 
 **Q-Learning** (off-policy TD control) — the target uses the max, not the taken action:
 
-$$\delta_t = R_{t+1} + \gamma\max_{a}Q(S_{t+1},a;\boldsymbol{w}) - Q(S_t,A_t;\boldsymbol{w})$$
+```
+δ_t = R_{t+1} + γmax_aQ(S_{t+1}, a;w) - Q(S_t, A_t;w)
+```
 
-**Off-policy via importance sampling.** For behavior policy $\mu$ and target $\pi$,
-$\mathbb{E}_{X\sim P}[f(X)] = \mathbb{E}_{X\sim Q}[\frac{P(X)}{Q(X)}f(X)]$. MC needs the full
-trajectory ratio $\rho_t = \prod_{k=t}^{T-1}\frac{\pi(S_k,A_k)}{\mu(S_k,A_k)}$ (very high
-variance); TD needs only the one-step ratio $\frac{\pi(S_t,A_t)}{\mu(S_t,A_t)}$. Q-Learning
+**Off-policy via importance sampling.** For behavior policy μ and target π,
+`E_{X~ P}[f(X)] = E_{X~ Q}[(P(X))/(Q(X))f(X)]`. MC needs the full
+trajectory ratio `ρ_t = ∏_{k=t}^{T-1}(π(S_k, A_k))/(μ(S_k, A_k))` (very high
+variance); TD needs only the one-step ratio `(π(S_t, A_t))/(μ(S_t, A_t))`. Q-Learning
 avoids ratios entirely, which is why it is the practical off-policy method.
 
 **Convergence.** The root cause of every failure below is that the semi-gradient TD update
@@ -96,13 +115,13 @@ avoids ratios entirely, which is why it is the practical off-policy method.
 | Policy | Algorithm | Tabular | Linear | Non-Linear |
 |---|---|:--:|:--:|:--:|
 | On | MC | ✓ | ✓ | ✓ |
-| On | TD / TD($\lambda$) | ✓ | ✓ | ✗ |
+| On | TD / TD(λ) | ✓ | ✓ | ✗ |
 | On | **Gradient TD** | ✓ | ✓ | ✓ |
 | Off | MC | ✓ | ✓ | ✓ |
-| Off | TD / TD($\lambda$) | ✓ | ✗ | ✗ |
+| Off | TD / TD(λ) | ✓ | ✗ | ✗ |
 | Off | **Gradient TD** | ✓ | ✓ | ✓ |
 
-*Control* — (✓) means it doesn't reach $V^*$ but bounces around near it:
+*Control* — (✓) means it doesn't reach `V^*` but bounces around near it:
 
 | Algorithm | Tabular | Linear | Non-Linear |
 |---|:--:|:--:|:--:|
@@ -113,7 +132,7 @@ avoids ratios entirely, which is why it is the practical off-policy method.
 
 **The Deadly Triad** — [bootstrapping, off-policy, function approximation]. Not a theorem, a rule
 of thumb: when all three combine, expect divergence, so drop one. Function approximation is
-non-negotiable at real-world scale, so the escape routes are a high $\lambda$ (mitigation),
+non-negotiable at real-world scale, so the escape routes are a high λ (mitigation),
 Gradient TD (chapter 12), or DQN (chapter 12). Note the triad survives Gradient TD in the
 *control* setting with non-linear FA.
 
@@ -124,51 +143,59 @@ Gradient TD (chapter 12), or DQN (chapter 12). Note the triad survives Gradient 
 
 **Batch RL.** Given a *fixed*, finite dataset, use it repeatedly rather than once:
 
-$$\Delta\boldsymbol{w} = \alpha\cdot\frac{1}{n}\sum_{i=1}^n (R_i + \gamma V(S'_i;\boldsymbol{w}) - V(S_i;\boldsymbol{w}))\nabla_{\boldsymbol{w}}V(S_i;\boldsymbol{w})$$
+```
+Δw = α·1/nΣ_{i=1}^n (R_i + γ V(S'_i;w) - V(S_i;w))∇_wV(S_i;w)
+```
 
 **Experience-replay** samples uniformly from a growing memory, decorrelating updates
 (`rl/experience_replay.py`).
 
-**Least-Squares TD (LSTD).** With linear FA the semi-gradient equation is *linear in $\boldsymbol{w}$*,
+**Least-Squares TD (LSTD).** With linear FA the semi-gradient equation is *linear in w*,
 so the fixed point can be solved directly instead of iterated:
 
-$$\sum_i \boldsymbol{\phi}(S_i)\big(\boldsymbol{\phi}(S_i)^T\boldsymbol{w}^* - (R_i + \gamma\boldsymbol{\phi}(S'_i)^T\boldsymbol{w}^*)\big) = 0$$
+```
+Σ_i φ(S_i)(φ(S_i)^Tw^* - (R_i + γφ(S'_i)^Tw^*)) = 0
+```
 
-> **Method:** accumulate $\boldsymbol{A} \mathrel{+}= \boldsymbol{\phi}(S_i)(\boldsymbol{\phi}(S_i) - \gamma\boldsymbol{\phi}(S'_i))^T$
-> (an outer product) and $\boldsymbol{b} \mathrel{+}= \boldsymbol{\phi}(S_i)R_i$, then $\boldsymbol{w}^* = \boldsymbol{A}^{-1}\boldsymbol{b}$.
+> **Method:** accumulate `A += φ(S_i)(φ(S_i) - γφ(S'_i))^T`
+> (an outer product) and `b += φ(S_i)R_i`, then `w^* = A^{-1}b`.
 > No learning rate at all. Sherman–Morrison gives an incremental inverse.
-> `least_squares_td` in `rl/td.py`. LSTD($\lambda$) replaces $\boldsymbol{\phi}(S_i)$ with $\boldsymbol{E}_{i,t}$.
+> `least_squares_td` in `rl/td.py`. LSTD(λ) replaces `φ(S_i)` with `E_{i, t}`.
 
-**LSPI.** LSTDQ (the $Q$-version of LSTD, with features $\boldsymbol{\phi}(s,a)$) inside a policy
+**LSPI.** LSTDQ (the Q-version of LSTD, with features φ(s, a)) inside a policy
 iteration loop — an off-policy, experience-reusing, learning-rate-free control algorithm.
 `least_squares_tdq`, `least_squares_policy_iteration`.
 
-**DQN.** Experience replay + a frozen target network $\boldsymbol{w}^-$:
+**DQN.** Experience replay + a frozen target network `w^-`:
 
-$$\Delta\boldsymbol{w} = \alpha\sum_i \big(r_i + \gamma\max_{a'}Q(s'_i,a';\boldsymbol{w}^-) - Q(s_i,a_i;\boldsymbol{w})\big)\nabla_{\boldsymbol{w}}Q(s_i,a_i;\boldsymbol{w})$$
+```
+Δw = αΣ_i (r_i + γmax_{a'}Q(s'_i, a';w^-) - Q(s_i, a_i;w))∇_wQ(s_i, a_i;w)
+```
 
-**Value Function Geometry.** The most conceptually dense section. Work in the $n$-dimensional
-space of value functions with the $\boldsymbol{\mu_{\pi}}$-weighted norm
-$d(\boldsymbol{V_1},\boldsymbol{V_2}) = (\boldsymbol{V_1}-\boldsymbol{V_2})^T\boldsymbol{D}(\boldsymbol{V_1}-\boldsymbol{V_2})$. Two operators act on it:
+**Value Function Geometry.** The most conceptually dense section. Work in the n-dimensional
+space of value functions with the `μ_π`-weighted norm
+`d(V_1, V_2) = (V_1-V_2)^TD(V_1-V_2)`. Two operators act on it:
 
-- $\boldsymbol{B}^{\pi}\cdot\boldsymbol{V} = \boldsymbol{\mathcal{R}}^{\pi} + \gamma\boldsymbol{\mathcal{P}}^{\pi}\boldsymbol{V}$ — the Bellman operator, whose fixed point $\boldsymbol{V}^{\pi}$ generally lies *outside* the representable subspace $\{\boldsymbol{\Phi}\boldsymbol{w}\}$;
-- $\boldsymbol{\Pi_{\Phi}} = \boldsymbol{\Phi}(\boldsymbol{\Phi}^T\boldsymbol{D}\boldsymbol{\Phi})^{-1}\boldsymbol{\Phi}^T\boldsymbol{D}$ — orthogonal projection *onto* that subspace.
+- `B^π·V = R^π + γP^πV` — the Bellman operator, whose fixed point `V^π` generally lies *outside* the representable subspace {Φw};
+- `Π_Φ = Φ(Φ^TDΦ)^{-1}Φ^TD` — orthogonal projection *onto* that subspace.
 
 Three different objectives, three different answers:
 
 | Objective | Minimizes | Solution |
 |---|---|---|
-| **BE** (Bellman Error) | $d(\boldsymbol{B}^{\pi}\boldsymbol{V_w}, \boldsymbol{V_w})$ | $\boldsymbol{w}_{BE} = ((\boldsymbol{\Phi} - \gamma\boldsymbol{\mathcal{P}}^{\pi}\boldsymbol{\Phi})^T\boldsymbol{D}(\boldsymbol{\Phi} - \gamma\boldsymbol{\mathcal{P}}^{\pi}\boldsymbol{\Phi}))^{-1}(\boldsymbol{\Phi}-\gamma\boldsymbol{\mathcal{P}}^{\pi}\boldsymbol{\Phi})^T\boldsymbol{D}\boldsymbol{\mathcal{R}}^{\pi}$ |
-| **TDE** (TD Error) | $\mathbb{E}[\delta^2]$ | naive residual gradient; converges to the wrong place |
-| **PBE** (Projected Bellman Error) | $d(\boldsymbol{\Pi_{\Phi}}\boldsymbol{B}^{\pi}\boldsymbol{V_w}, \boldsymbol{V_w})$ | $\boldsymbol{w}_{PBE} = \boldsymbol{A}^{-1}\boldsymbol{b}$, $\boldsymbol{A} = \boldsymbol{\Phi}^T\boldsymbol{D}(\boldsymbol{\Phi} - \gamma\boldsymbol{\mathcal{P}}^{\pi}\boldsymbol{\Phi})$, $\boldsymbol{b} = \boldsymbol{\Phi}^T\boldsymbol{D}\boldsymbol{\mathcal{R}}^{\pi}$ |
+| **BE** (Bellman Error) | `d(B^πV_w, V_w)` | `w_{BE} = ((Φ - γP^πΦ)^TD(Φ - γP^πΦ))^{-1}(Φ-γP^πΦ)^TDR^π` |
+| **TDE** (TD Error) | `E[δ^2]` | naive residual gradient; converges to the wrong place |
+| **PBE** (Projected Bellman Error) | `d(Π_ΦB^πV_w, V_w)` | `w_{PBE} = A^{-1}b`, `A = Φ^TD(Φ - γP^πΦ)`, `b = Φ^TDR^π` |
 
-$\boldsymbol{w}_{PBE}$ is exactly the LSTD solution, and the semi-gradient TD update is a stochastic
+`w_{PBE}` is exactly the LSTD solution, and the semi-gradient TD update is a stochastic
 approximation of it — which explains both what TD converges to and why it can diverge off-policy.
 
-**Gradient TD (TDC).** A *true* gradient of the PBE, using a second weight vector $\boldsymbol{\theta}$
-to estimate $(\mathbb{E}[\boldsymbol{\phi}\boldsymbol{\phi}^T])^{-1}\mathbb{E}[\delta\boldsymbol{\phi}]$:
+**Gradient TD (TDC).** A *true* gradient of the PBE, using a second weight vector θ
+to estimate `(E[φφ^T])^{-1}E[δφ]`:
 
-$$\Delta\boldsymbol{w} = \alpha\,\delta\,\boldsymbol{\phi}(s) - \alpha\gamma\,\boldsymbol{\phi}(s')(\boldsymbol{\phi}(s)^T\boldsymbol{\theta}), \qquad \Delta\boldsymbol{\theta} = \beta(\delta - \boldsymbol{\phi}(s)^T\boldsymbol{\theta})\boldsymbol{\phi}(s)$$
+```
+Δw = αδφ(s) - αγφ(s')(φ(s)^Tθ), Δθ = β(δ - φ(s)^Tθ)φ(s)
+```
 
 For *prediction* this converges in every cell of the table above, including off-policy with
 non-linear FA. For *control*, Gradient Q-Learning converges with linear FA but still diverges
@@ -176,54 +203,56 @@ with non-linear FA — the triad is defused, not eliminated.
 
 ## Chapter 13 — Policy Gradient Algorithms
 
-Parameterize the policy directly as $\pi(s,a;\boldsymbol{\theta})$ and ascend
-$J(\boldsymbol{\theta}) = \mathbb{E}_{\pi}[\sum_t \gamma^t R_{t+1}]$. Motivation: continuous/large action
-spaces, stochastic optimal policies, smoother convergence than $\arg\max$-based methods.
+Parameterize the policy directly as π(s, a;θ) and ascend
+`J(θ) = E_π[Σ_t γ^t R_{t+1}]`. Motivation: continuous/large action
+spaces, stochastic optimal policies, smoother convergence than argmax-based methods.
 
 **Policy Gradient Theorem.** The central result — the gradient contains **no**
-$\nabla_{\boldsymbol{\theta}}$ of the environment dynamics:
+`∇_θ` of the environment dynamics:
 
-$$\nabla_{\boldsymbol{\theta}}J(\boldsymbol{\theta}) = \sum_{s}\rho^{\pi}(s)\sum_{a}\nabla_{\boldsymbol{\theta}}\pi(s,a;\boldsymbol{\theta})\,Q^{\pi}(s,a) = \mathbb{E}_{s\sim\rho^{\pi}, a\sim\pi}\big[\nabla_{\boldsymbol{\theta}}\log\pi(s,a;\boldsymbol{\theta})\cdot Q^{\pi}(s,a)\big]$$
+```
+∇_θJ(θ) = Σ_sρ^π(s)Σ_a∇_θπ(s, a;θ)Q^π(s, a) = E_{s~ρ^π, a~π}[∇_θlogπ(s, a;θ)· Q^π(s, a)]
+```
 
-(Proved by unrolling $V^{\pi}(S_0)$ through the Bellman policy equation and collecting terms into
-$\rho^{\pi}$.) The identity that makes it work is the **likelihood-ratio trick**
-$\nabla_{\boldsymbol{\theta}}\pi = \pi\nabla_{\boldsymbol{\theta}}\log\pi$.
+(Proved by unrolling `V^π(S_0)` through the Bellman policy equation and collecting terms into
+`ρ^π`.) The identity that makes it work is the **likelihood-ratio trick**
+`∇_θπ = π∇_θlogπ`.
 
-**Score functions** $\nabla_{\boldsymbol{\theta}}\log\pi(s,a;\boldsymbol{\theta})$ for the two canonical policies:
+**Score functions** `∇_θlogπ(s, a;θ)` for the two canonical policies:
 
 | Policy | Form | Score |
 |---|---|---|
-| Softmax | $\pi \propto e^{\boldsymbol{\phi}(s,a)^T\boldsymbol{\theta}}$ | $\boldsymbol{\phi}(s,a) - \mathbb{E}_{\pi}[\boldsymbol{\phi}(s,\cdot)]$ |
-| Gaussian | $a \sim \mathcal{N}(\boldsymbol{\phi}(s)^T\boldsymbol{\theta}, \sigma^2)$ | $\dfrac{(a - \boldsymbol{\phi}(s)^T\boldsymbol{\theta})\boldsymbol{\phi}(s)}{\sigma^2}$ |
+| Softmax | `π ∝ e^{φ(s, a)^Tθ}` | `φ(s, a) - E_π[φ(s, ·)]` |
+| Gaussian | `a ~ N(φ(s)^Tθ, σ^2)` | `((a - φ(s)^Tθ)φ(s))/σ^2` |
 
-**The algorithm family**, each replacing $Q^{\pi}$ with a cheaper estimate:
+**The algorithm family**, each replacing `Q^π` with a cheaper estimate:
 
-| Algorithm | $\boldsymbol{\theta}$-update uses | Note |
+| Algorithm | θ-update uses | Note |
 |---|---|---|
-| **REINFORCE** | $G_t$ | MC, unbiased, high variance |
-| **Actor-Critic** | $Q(S_t,A_t;\boldsymbol{w})$ | critic learned by TD; biased |
-| **with baseline** | $Q(S_t,A_t;\boldsymbol{w}) - B(S_t)$ | any $B(s)$ leaves the gradient unbiased, since $\sum_a \nabla_{\boldsymbol{\theta}}\pi(s,a) B(s) = B(s)\nabla_{\boldsymbol{\theta}}1 = 0$ |
-| **Advantage AC** | $A = Q(s,a;\boldsymbol{w}) - V(s;\boldsymbol{v})$ | two critics |
-| **TD-error AC** | $\delta = R_{t+1} + \gamma V(S_{t+1};\boldsymbol{v}) - V(S_t;\boldsymbol{v})$ | since $\mathbb{E}_{\pi}[\delta^{\pi}\mid s,a] = A^{\pi}(s,a)$, one critic suffices |
+| **REINFORCE** | `G_t` | MC, unbiased, high variance |
+| **Actor-Critic** | `Q(S_t, A_t;w)` | critic learned by TD; biased |
+| **with baseline** | `Q(S_t, A_t;w) - B(S_t)` | any B(s) leaves the gradient unbiased, since `Σ_a ∇_θπ(s, a) B(s) = B(s)∇_θ1 = 0` |
+| **Advantage AC** | A = Q(s, a;w) - V(s;v) | two critics |
+| **TD-error AC** | `δ = R_{t+1} + γ V(S_{t+1};v) - V(S_t;v)` | since `E_π[δ^π \| s, a] = A^π(s, a)`, one critic suffices |
 
-All carry the $\gamma^t$ factor: $\Delta\boldsymbol{\theta} = \alpha\gamma^t\nabla_{\boldsymbol{\theta}}\log\pi(S_t,A_t;\boldsymbol{\theta})\cdot(\ldots)$.
+All carry the `γ^t` factor: `Δθ = αγ^t∇_θlogπ(S_t, A_t;θ)·(...)`.
 
 **Compatible Function Approximation Theorem.** If (1)
-$\nabla_{\boldsymbol{w}}Q(s,a;\boldsymbol{w}^*) = \nabla_{\boldsymbol{\theta}}\log\pi(s,a;\boldsymbol{\theta})$ and (2) $\boldsymbol{w}^*$
-minimizes the expected squared critic error, then substituting the critic for $Q^{\pi}$ introduces
+`∇_wQ(s, a;w^*) = ∇_θlogπ(s, a;θ)` and (2) `w^*`
+minimizes the expected squared critic error, then substituting the critic for `Q^π` introduces
 **no bias**. So a linear critic on the score features is exactly compatible.
 
 **Natural Policy Gradient.** Under the Fisher metric,
-$\nabla^{nat}_{\boldsymbol{\theta}}J = \boldsymbol{FIM}^{-1}\nabla_{\boldsymbol{\theta}}J$; combined with the compatible-FA
-result $\nabla_{\boldsymbol{\theta}}J = \boldsymbol{FIM}\cdot\boldsymbol{w}^*_{\theta}$, this collapses to the strikingly
-simple $\nabla^{nat}_{\boldsymbol{\theta}}J(\boldsymbol{\theta}) = \boldsymbol{w}^*_{\theta}$, i.e.
-$\Delta\boldsymbol{\theta} = \alpha_{\boldsymbol{\theta}}\boldsymbol{w}$.
+`∇^{nat}_θJ = FIM^{-1}∇_θJ`; combined with the compatible-FA
+result `∇_θJ = FIM·w^*_θ`, this collapses to the strikingly
+simple `∇^{nat}_θJ(θ) = w^*_θ`, i.e.
+`Δθ = α_θw`.
 
 **Deterministic Policy Gradient (DPG).**
-$\nabla_{\boldsymbol{\theta}}J = \mathbb{E}_{s\sim\rho^{\pi_D}}[\nabla_{\boldsymbol{\theta}}\pi_D(s;\boldsymbol{\theta})\nabla_a Q^{\pi_D}(s,a)\big|_{a=\pi_D(s)}]$ — the chain rule through the action.
+`∇_θJ = E_{s~ρ^{π_D}}[∇_θπ_D(s;θ)∇_a Q^{π_D}(s, a)|_{a=π_D(s)}]` — the chain rule through the action.
 
 **Evolutionary Strategies.** Not RL at all — a black-box gradient estimate
-$\frac{1}{\sigma}\mathbb{E}_{\boldsymbol{\epsilon}\sim\mathcal{N}(0,\boldsymbol{I})}[\boldsymbol{\epsilon}F(\boldsymbol{\theta}+\sigma\boldsymbol{\epsilon})]$,
+`1/σE_{ε~N(0, I)}[εF(θ+σε)]`,
 included as a competitive, embarrassingly parallel alternative.
 
 > **Code:** `rl/policy_gradient.py` — `reinforce_gaussian`, `actor_critic_gaussian`,

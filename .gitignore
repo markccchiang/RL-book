@@ -29,3 +29,7 @@ latex/Alon*
 latex/epigrafica.sty
 lgrenc.def
 
+
+# Sphinx docs build (docs/notes is a generated mirror of notes/)
+docs/_build/
+docs/notes/

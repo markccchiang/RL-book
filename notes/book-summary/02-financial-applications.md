@@ -41,14 +41,14 @@ subject to `dW_t = ((r + π_t(μ - r))W_t - c_t)dt + π_t σ W_tdz_t`.
 1. Write the **HJB equation** (appendix 4) and expand `dV^*` with **Itô's Lemma** (appendix 3).
 2. Take `∂/∂π_t` and `∂/∂c_t` of the resulting expression and set to zero:
    ```
-π_t^* = (-∂V^*/∂W_t · (μ - r))/(∂^2 V^*/∂W_t^2 · σ^2 W_t), c_t^* = ((∂V^*)/(∂W_t))^{-1/γ}
-```
+   π_t^* = (-∂V^*/∂W_t · (μ - r))/(∂^2 V^*/∂W_t^2 · σ^2 W_t), c_t^* = ((∂V^*)/(∂W_t))^{-1/γ}
+   ```
 3. Substitute back to get a non-linear PDE in `V^*`.
 4. **Guess** `V^*(t, W_t) = f(t)^γ(W_t^{1-γ})/(1-γ)`; the PDE reduces to the ODE f'(t) = ν f(t) - 1 with `ν = (ρ - (1-γ)(((μ-r)^2)/2σ^2γ + r))/γ`.
 5. Solve the ODE with terminal condition:
    ```
-f(t) = (1 + (νε - 1)e^{-ν(T-t)})/ν (ν ≠ 0), f(t) = T - t + ε (ν = 0)
-```
+   f(t) = (1 + (νε - 1)e^{-ν(T-t)})/ν (ν ≠ 0), f(t) = T - t + ε (ν = 0)
+   ```
 
 **Results.** `π^*(t, W_t) = (μ - r)/σ^2γ` — *constant*, independent of both
 time and wealth — and `c^*(t, W_t) = W_t / f(t)`.
@@ -134,8 +134,8 @@ impact β: `P_{t+1} = P_t - α N_t + ε_t`, execution price
 > **Method:** backward induction. With a linear price-impact model and risk-neutral utility the
 > value function stays quadratic, giving the closed form
 > ```
-N_t^* = R_t/(T-t), V_t^*((P_t, R_t)) = R_t P_t - R_t^2/2((2β + α(T-t-1))/(T-t))
-```
+> N_t^* = R_t/(T-t), V_t^*((P_t, R_t)) = R_t P_t - R_t^2/2((2β + α(T-t-1))/(T-t))
+> ```
 > — i.e. **uniform (TWAP) execution is optimal** under these assumptions. Adding a mean-reverting
 > signal `X_{t+1} = ρ X_t + η_t` perturbs it to
 > `N_t^* = R_t/(T-t) + h(t, β, θ, ρ)· X_t`. Beyond these tractable cases: RL.

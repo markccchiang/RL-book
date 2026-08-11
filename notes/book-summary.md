@@ -49,7 +49,8 @@ These notes are written to be read **two ways**, and the math is stored once to 
   There is no LaTeX here, so nothing needs a math plugin to make sense.
 - **As a typeset site** — `make -C docs html` builds `notes/` with Sphinx, and a build-time
   extension (`docs/_ext/mathify.py`) translates the Unicode back into LaTeX so MathJax
-  typesets it properly, exactly as in a LaTeX document. Nothing on disk changes.
+  typesets it properly, exactly as in a LaTeX document. Nothing on disk changes, and
+  MathJax is vendored locally, so the built site needs no network connection.
 
 So `Pr[S_{t+1}|S_t, ..., S_0] = Pr[S_{t+1}|S_t]` stays legible as text here, and renders as
 real math with a blackboard ℙ and proper subscripts on the site.

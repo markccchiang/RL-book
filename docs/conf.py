@@ -67,6 +67,14 @@ myst_heading_anchors = 3
 myst_enable_extensions = ['deflist', 'dollarmath', 'smartquotes',
                           'substitution']
 
+# MathJax is vendored under _static so equations render with no network:
+# the v3 SVG bundle compiles the TeX fonts in, so it needs no font files.
+mathjax_path = 'mathjax/tex-mml-svg.js'
+mathjax3_config = {
+    'options': {'enableMenu': False},   # the menu lazy-loads a11y components
+    'tex': {'packages': {'[+]': ['ams']}},
+}
+
 html_theme = 'furo'
 html_title = 'Foundations of RL with Applications in Finance — Notes'
 html_static_path = ['_static']
